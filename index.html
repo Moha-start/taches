@@ -7,6 +7,8 @@
         body { font-family: Arial, sans-serif; margin: 20px; }
         .task { margin: 10px 0; padding: 10px; border: 1px solid #ccc; }
         .task button { margin-left: 10px; }
+        .completed { text-decoration: line-through; color: green; }
+        .pending { color: black; }
     </style>
 </head>
 <body>
@@ -20,7 +22,7 @@
 
     <script>
         function loadTasks() {
-            fetch('https://script.google.com/macros/s/AKfycbxCtRZjUqLEEaJfP-iDI24IMc05iC9M4ocx7-i8ksuld-Nbl_3taTj96C-BoDX_1lkQ/exec')
+            fetch('https://script.google.com/macros/s/AKfycbyTkQbhx48PvWFeUypMmo4EuHPCOPqaGdymprHPV8_9roHzBCciYD8rpPKOgtalaTg/exec')
                 .then(response => response.json())
                 .then(data => {
                     const tasksDiv = document.getElementById('tasks');
@@ -28,8 +30,10 @@
                     data.forEach(task => {
                         const taskDiv = document.createElement('div');
                         taskDiv.className = 'task';
-                        taskDiv.innerHTML = `<span>${task.deadline} : ${task.note}</span>
-                            <button onclick="deleteTask('${task.deadline}')">Supprimer</button>`;
+                        const statusClass = task.status === 'Completed' ? 'completed' : 'pending';
+                        taskDiv.innerHTML = `<span class="${statusClass}">${task.deadline} : ${task.note} (${task.status})</span>
+                            <button onclick="deleteTask('${task.deadline}')">Supprimer</button>
+                            <button onclick="validateTask('${task.deadline}')" ${task.status === 'Completed' ? 'disabled' : ''}>Valider</button>`;
                         tasksDiv.appendChild(taskDiv);
                     });
                 });
@@ -39,7 +43,7 @@
             const note = document.getElementById('note').value;
             const deadline = document.getElementById('deadline').value;
             if (note && deadline) {
-                fetch(`https://script.google.com/macros/s/AKfycbxCtRZjUqLEEaJfP-iDI24IMc05iC9M4ocx7-i8ksuld-Nbl_3taTj96C-BoDX_1lkQ/exec?add=true&note=${encodeURIComponent(note)}&deadline=${encodeURIComponent(deadline)}`)
+                fetch(`https://script.google.com/macros/s/AKfycbyTkQbhx48PvWFeUypMmo4EuHPCOPqaGdymprHPV8_9roHzBCciYD8rpPKOgtalaTg/exec?add=true&note=${encodeURIComponent(note)}&deadline=${encodeURIComponent(deadline)}`)
                     .then(() => {
                         document.getElementById('note').value = '';
                         document.getElementById('deadline').value = '';
@@ -49,7 +53,12 @@
         }
 
         function deleteTask(deadline) {
-            fetch(`https://script.google.com/macros/s/AKfycbxCtRZjUqLEEaJfP-iDI24IMc05iC9M4ocx7-i8ksuld-Nbl_3taTj96C-BoDX_1lkQ/exec?delete=true&deadline=${encodeURIComponent(deadline)}`)
+            fetch(`https://script.google.com/macros/s/AKfycbyTkQbhx48PvWFeUypMmo4EuHPCOPqaGdymprHPV8_9roHzBCciYD8rpPKOgtalaTg/exec?delete=true&deadline=${encodeURIComponent(deadline)}`)
+                .then(() => loadTasks());
+        }
+
+        function validateTask(deadline) {
+            fetch(`https://script.google.com/macros/s/AKfycbyTkQbhx48PvWFeUypMmo4EuHPCOPqaGdymprHPV8_9roHzBCciYD8rpPKOgtalaTg/exec?validate=true&deadline=${encodeURIComponent(deadline)}`)
                 .then(() => loadTasks());
         }
 
