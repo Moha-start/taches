@@ -1,10 +1,9 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html>
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Bouton connecté à Google Sheets</title>
-  <style>
+    <title>Liste des tâches</title>
+    <meta charset="UTF-8">
+    <style>
     body {
       font-family: Arial, sans-serif;
       margin: 5vw;
@@ -179,139 +178,57 @@
         font-size: 0.9rem;
       }
     }
-  </style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .task { margin: 10px 0; padding: 10px; border: 1px solid #ccc; }
+        .task button { margin-left: 10px; }
+    </style>
 </head>
 <body>
-  <h1>Bouton connecté à Google Sheets</h1>
+    <h1>Liste des tâches</h1>
+    <div>
+        <input type="text" id="note" placeholder="Entrez votre tâche">
+        <input type="datetime-local" id="deadline" placeholder="Date limite">
+        <button onclick="addTask()">Ajouter</button>
+    </div>
+    <div id="tasks"></div>
 
-  <div class="input-container">
-    <input type="text" id="noteInput" placeholder="Entrez une note">
-    <button onclick="enregistrerClic()">Ajouter</button>
-  </div>
-
-  <div id="compteur">Dernier appui : jamais</div>
-  <ul id="historique"></ul>
-  <div id="errorMessage"></div>
-
-  <script>
-    const API_URL = "https://script.google.com/macros/s/AKfycbw5kWGW8eX6njfx_-GM1nWKyCcP93q49vurpqSDhkTxv9KXUfzZ5VeJiLS5mRL_iYxg/exec";
-
-    async function chargerHistorique() {
-      try {
-        console.log("Chargement de l'historique...");
-        const res = await fetch(API_URL);
-        if (!res.ok) throw new Error(`Erreur HTTP : ${res.status} ${res.statusText}`);
-        const data = await res.json();
-        console.log("Données reçues :", data);
-
-        if (!Array.isArray(data)) {
-          throw new Error("Les données reçues ne sont pas un tableau");
+    <script>
+        function loadTasks() {
+            fetch('https://script.google.com/macros/s/AKfycbxCtRZjUqLEEaJfP-iDI24IMc05iC9M4ocx7-i8ksuld-Nbl_3taTj96C-BoDX_1lkQ/exec')
+                .then(response => response.json())
+                .then(data => {
+                    const tasksDiv = document.getElementById('tasks');
+                    tasksDiv.innerHTML = '';
+                    data.forEach(task => {
+                        const taskDiv = document.createElement('div');
+                        taskDiv.className = 'task';
+                        taskDiv.innerHTML = `<span>${task.deadline} : ${task.note}</span>
+                            <button onclick="deleteTask('${task.deadline}')">Supprimer</button>`;
+                        tasksDiv.appendChild(taskDiv);
+                    });
+                });
         }
 
-        // Trier du plus récent au plus ancien
-        data.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-
-        const historique = document.getElementById("historique");
-        historique.innerHTML = ""; // Clear list to prevent duplicates
-
-        if (data.length === 0) {
-          const li = document.createElement("li");
-          li.textContent = "Aucune entrée disponible";
-          historique.appendChild(li);
-        } else {
-          data.forEach(item => {
-            if (!item.timestamp) {
-              console.warn("Entrée sans timestamp :", item);
-              return;
+        function addTask() {
+            const note = document.getElementById('note').value;
+            const deadline = document.getElementById('deadline').value;
+            if (note && deadline) {
+                fetch(`YOUR_SCRIPT_URL?add=true&note=${encodeURIComponent(note)}&deadline=${encodeURIComponent(deadline)}`)
+                    .then(() => {
+                        document.getElementById('note').value = '';
+                        document.getElementById('deadline').value = '';
+                        loadTasks();
+                    });
             }
-            const li = document.createElement("li");
-            const textSpan = document.createElement("span");
-            textSpan.textContent = `• Date: ${item.timestamp}${item.note ? ' | Note: ' + item.note : ' | Note: (aucune)'}${item.validationTimestamp ? ' | Validé: ' + item.validationTimestamp : ''}`;
-            const buttonContainer = document.createElement("div");
-
-            // Bouton Supprimer
-            const deleteBtn = document.createElement("button");
-            deleteBtn.textContent = "Supprimer";
-            deleteBtn.className = "delete-btn";
-            deleteBtn.onclick = () => supprimerEntree(item.timestamp);
-            buttonContainer.appendChild(deleteBtn);
-
-            // Bouton Valider
-            const validateBtn = document.createElement("button");
-            validateBtn.textContent = "Valider";
-            validateBtn.className = "validate-btn";
-            validateBtn.disabled = !!item.validationTimestamp; // Désactivé si déjà validé
-            validateBtn.onclick = () => validerEntree(item.timestamp);
-            buttonContainer.appendChild(validateBtn);
-
-            li.appendChild(textSpan);
-            li.appendChild(buttonContainer);
-            historique.appendChild(li);
-            console.log("Ajout de l'entrée à la liste :", item);
-          });
         }
 
-        document.getElementById("compteur").textContent = data.length > 0 
-          ? `Dernier appui : Date: ${data[0].timestamp}${data[0].note ? ' | Note: ' + data[0].note : ' | Note: (aucune)'}${data[0].validationTimestamp ? ' | Validé: ' + data[0].validationTimestamp : ''}` 
-          : "Dernier appui : jamais";
-
-        document.getElementById("errorMessage").textContent = "";
-      } catch (e) {
-        console.error("Erreur de chargement :", e);
-        document.getElementById("errorMessage").textContent = `Erreur de chargement : ${e.message}`;
-      }
-    }
-
-    async function enregistrerClic() {
-      try {
-        const note = document.getElementById("noteInput").value.trim();
-        if (!note) {
-          alert("Veuillez entrer une note avant d'ajouter.");
-          document.getElementById("errorMessage").textContent = "Veuillez entrer une note.";
-          return;
+        function deleteTask(deadline) {
+            fetch(`YOUR_SCRIPT_URL?delete=true&deadline=${encodeURIComponent(deadline)}`)
+                .then(() => loadTasks());
         }
-        const url = `${API_URL}?add=true&note=${encodeURIComponent(note)}`;
-        console.log("Envoi de la requête :", url);
-        const res = await fetch(url);
-        if (!res.ok) throw new Error(`Erreur HTTP : ${res.status} ${res.statusText}`);
-        document.getElementById("noteInput").value = ''; // Clear input after submission
-        console.log("Clic enregistré, rechargement de l'historique...");
-        await chargerHistorique();
-      } catch (e) {
-        console.error("Erreur d'envoi :", e);
-        document.getElementById("errorMessage").textContent = `Erreur d'envoi : ${e.message}`;
-      }
-    }
 
-    async function supprimerEntree(timestamp) {
-      try {
-        const url = `${API_URL}?delete=true&timestamp=${encodeURIComponent(timestamp)}`;
-        console.log("Envoi de la requête de suppression :", url);
-        const res = await fetch(url);
-        if (!res.ok) throw new Error(`Erreur HTTP : ${res.status} ${res.statusText}`);
-        console.log("Entrée supprimée, rechargement de l'historique...");
-        await chargerHistorique();
-      } catch (e) {
-        console.error("Erreur de suppression :", e);
-        document.getElementById("errorMessage").textContent = `Erreur de suppression : ${e.message}`;
-      }
-    }
-
-    async function validerEntree(timestamp) {
-      try {
-        const url = `${API_URL}?validate=true&timestamp=${encodeURIComponent(timestamp)}`;
-        console.log("Envoi de la requête de validation :", url);
-        const res = await fetch(url);
-        if (!res.ok) throw new Error(`Erreur HTTP : ${res.status} ${res.statusText}`);
-        console.log("Entrée validée, rechargement de l'historique...");
-        await chargerHistorique();
-      } catch (e) {
-        console.error("Erreur de validation :", e);
-        document.getElementById("errorMessage").textContent = `Erreur de validation : ${e.message}`;
-      }
-    }
-
-    chargerHistorique();
-  </script>
+        // Charger les tâches au démarrage
+        window.onload = loadTasks;
+    </script>
 </body>
 </html>
