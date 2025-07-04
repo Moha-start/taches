@@ -7,8 +7,8 @@
         body { font-family: Arial, sans-serif; margin: 20px; }
         .task { margin: 10px 0; padding: 10px; border: 1px solid #ccc; }
         .task button { margin-left: 10px; }
-        .completed { text-decoration: line-through; color: green; }
-        .pending { color: black; }
+        .completed { text-decoration: line-through; color: #00cc00; } /* Vert pour tâches terminées */
+        .pending { color: #000000; } /* Noir pour tâches en attente */
     </style>
 </head>
 <body>
@@ -22,7 +22,7 @@
 
     <script>
         function loadTasks() {
-            fetch('https://script.google.com/macros/s/AKfycbyTkQbhx48PvWFeUypMmo4EuHPCOPqaGdymprHPV8_9roHzBCciYD8rpPKOgtalaTg/exec')
+            fetch('https://script.google.com/macros/s/AKfycbzCOTf868WpVI9RxBsFNrOlgzR8yNEgSh5dpXoqeWgfRkeul9LEzyPIulxiut2v5tmV/exec')
                 .then(response => response.json())
                 .then(data => {
                     const tasksDiv = document.getElementById('tasks');
@@ -31,35 +31,43 @@
                         const taskDiv = document.createElement('div');
                         taskDiv.className = 'task';
                         const statusClass = task.status === 'Completed' ? 'completed' : 'pending';
-                        taskDiv.innerHTML = `<span class="${statusClass}">${task.deadline} : ${task.note} (${task.status})</span>
+                        taskDiv.innerHTML = `
+                            <span class="${statusClass}">${task.deadline} : ${task.note} (${task.status === 'Completed' ? 'Terminé' : 'En attente'})</span>
                             <button onclick="deleteTask('${task.deadline}')">Supprimer</button>
-                            <button onclick="validateTask('${task.deadline}')" ${task.status === 'Completed' ? 'disabled' : ''}>Valider</button>`;
+                            <button onclick="validateTask('${task.deadline}')" ${task.status === 'Completed' ? 'disabled' : ''}>Valider</button>
+                        `;
                         tasksDiv.appendChild(taskDiv);
                     });
-                });
+                })
+                .catch(error => console.error('Erreur:', error));
         }
 
         function addTask() {
             const note = document.getElementById('note').value;
             const deadline = document.getElementById('deadline').value;
             if (note && deadline) {
-                fetch(`https://script.google.com/macros/s/AKfycbyTkQbhx48PvWFeUypMmo4EuHPCOPqaGdymprHPV8_9roHzBCciYD8rpPKOgtalaTg/exec?add=true&note=${encodeURIComponent(note)}&deadline=${encodeURIComponent(deadline)}`)
+                fetch(`https://script.google.com/macros/s/AKfycbzCOTf868WpVI9RxBsFNrOlgzR8yNEgSh5dpXoqeWgfRkeul9LEzyPIulxiut2v5tmV/exec?add=true¬e=${encodeURIComponent(note)}&deadline=${encodeURIComponent(deadline)}`)
                     .then(() => {
                         document.getElementById('note').value = '';
                         document.getElementById('deadline').value = '';
                         loadTasks();
-                    });
+                    })
+                    .catch(error => console.error('Erreur:', error));
+            } else {
+                alert('Veuillez entrer une tâche et une date limite.');
             }
         }
 
         function deleteTask(deadline) {
-            fetch(`https://script.google.com/macros/s/AKfycbyTkQbhx48PvWFeUypMmo4EuHPCOPqaGdymprHPV8_9roHzBCciYD8rpPKOgtalaTg/exec?delete=true&deadline=${encodeURIComponent(deadline)}`)
-                .then(() => loadTasks());
+            fetch(`https://script.google.com/macros/s/AKfycbzCOTf868WpVI9RxBsFNrOlgzR8yNEgSh5dpXoqeWgfRkeul9LEzyPIulxiut2v5tmV/exec?delete=true&deadline=${encodeURIComponent(deadline)}`)
+                .then(() => loadTasks())
+                .catch(error => console.error('Erreur:', error));
         }
 
         function validateTask(deadline) {
-            fetch(`https://script.google.com/macros/s/AKfycbyTkQbhx48PvWFeUypMmo4EuHPCOPqaGdymprHPV8_9roHzBCciYD8rpPKOgtalaTg/exec?validate=true&deadline=${encodeURIComponent(deadline)}`)
-                .then(() => loadTasks());
+            fetch(`https://script.google.com/macros/s/AKfycbzCOTf868WpVI9RxBsFNrOlgzR8yNEgSh5dpXoqeWgfRkeul9LEzyPIulxiut2v5tmV/exec?validate=true&deadline=${encodeURIComponent(deadline)}`)
+                .then(() => loadTasks())
+                .catch(error => console.error('Erreur:', error));
         }
 
         // Charger les tâches au démarrage
