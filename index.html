@@ -28,7 +28,7 @@
       margin-bottom: 1rem;
     }
 
-    #noteInput {
+    #noteInput, #dateLimiteInput {
       font-size: 1rem;
       padding: 0.8rem;
       flex: 1;
@@ -141,7 +141,7 @@
         flex-direction: column;
       }
 
-      #noteInput {
+      #noteInput, #dateLimiteInput {
         width: 100%;
         font-size: 0.9rem;
         padding: 0.6rem;
@@ -186,6 +186,7 @@
 
   <div class="input-container">
     <input type="text" id="noteInput" placeholder="Entrez une note">
+    <input type="datetime-local" id="dateLimiteInput" placeholder="Date et heure limite">
     <button onclick="enregistrerClic()">Ajouter</button>
   </div>
 
@@ -194,7 +195,7 @@
   <div id="errorMessage"></div>
 
   <script>
-    const API_URL = "https://script.google.com/macros/s/AKfycbwcot6Gg03V9MPnSjgeai5zz4-My9trAz1qISAUOxvOZilW2N77Bjk-otO76gTa_M6h/exec";
+    const API_URL = "https://script.google.com/macros/s/AKfycbzbjV1ijXFxL0zOgK-mz1IRPnnedNhx-VWZ0r0Q0GzvVXu6PL2oNYMwGyeoXbz4aBtQ/exec";
 
     async function chargerHistorique() {
       try {
@@ -226,7 +227,7 @@
             }
             const li = document.createElement("li");
             const textSpan = document.createElement("span");
-            textSpan.textContent = `• Date: ${item.timestamp}${item.note ? ' | Note: ' + item.note : ' | Note: (aucune)'}${item.validationTimestamp ? ' | Validé: ' + item.validationTimestamp : ''}`;
+            textSpan.textContent = `• Date: ${item.timestamp}${item.note ? ' | Note: ' + item.note : ' | Note: (aucune)'}${item.dateLimite ? ' | Date limite: ' + item.dateLimite : ' | Date limite: (aucune)'}${item.validationTimestamp ? ' | Validé: ' + item.validationTimestamp : ''}`;
             const buttonContainer = document.createElement("div");
 
             // Bouton Supprimer
@@ -252,7 +253,7 @@
         }
 
         document.getElementById("compteur").textContent = data.length > 0 
-          ? `Dernier appui : Date: ${data[0].timestamp}${data[0].note ? ' | Note: ' + data[0].note : ' | Note: (aucune)'}${data[0].validationTimestamp ? ' | Validé: ' + data[0].validationTimestamp : ''}` 
+          ? `Dernier appui : Date: ${data[0].timestamp}${data[0].note ? ' | Note: ' + data[0].note : ' | Note: (aucune)'}${data[0].dateLimite ? ' | Date limite: ' + data[0].dateLimite : ' | Date limite: (aucune)'}${data[0].validationTimestamp ? ' | Validé: ' + data[0].validationTimestamp : ''}` 
           : "Dernier appui : jamais";
 
         document.getElementById("errorMessage").textContent = "";
@@ -265,16 +266,18 @@
     async function enregistrerClic() {
       try {
         const note = document.getElementById("noteInput").value.trim();
+        const dateLimite = document.getElementById("dateLimiteInput").value;
         if (!note) {
           alert("Veuillez entrer une note avant d'ajouter.");
           document.getElementById("errorMessage").textContent = "Veuillez entrer une note.";
           return;
         }
-        const url = `${API_URL}?add=true&note=${encodeURIComponent(note)}`;
+        const url = `${API_URL}?add=true¬e=${encodeURIComponent(note)}&dateLimite=${encodeURIComponent(dateLimite)}`;
         console.log("Envoi de la requête :", url);
         const res = await fetch(url);
         if (!res.ok) throw new Error(`Erreur HTTP : ${res.status} ${res.statusText}`);
         document.getElementById("noteInput").value = ''; // Clear input after submission
+        document.getElementById("dateLimiteInput").value = ''; // Clear date input after submission
         console.log("Clic enregistré, rechargement de l'historique...");
         await chargerHistorique();
       } catch (e) {
@@ -285,7 +288,7 @@
 
     async function supprimerEntree(timestamp) {
       try {
-        const url = `${API_URL}?delete=true&timestamp=${encodeURIComponent(timestamp)}`;
+        const url = `${API_URL}?delete=true×tamp=${encodeURIComponent(timestamp)}`;
         console.log("Envoi de la requête de suppression :", url);
         const res = await fetch(url);
         if (!res.ok) throw new Error(`Erreur HTTP : ${res.status} ${res.statusText}`);
@@ -299,7 +302,7 @@
 
     async function validerEntree(timestamp) {
       try {
-        const url = `${API_URL}?validate=true&timestamp=${encodeURIComponent(timestamp)}`;
+        const url = `${API_URL}?validate=true×tamp=${encodeURIComponent(timestamp)}`;
         console.log("Envoi de la requête de validation :", url);
         const res = await fetch(url);
         if (!res.ok) throw new Error(`Erreur HTTP : ${res.status} ${res.statusText}`);
