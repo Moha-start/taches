@@ -28,7 +28,7 @@
       margin-bottom: 1rem;
     }
 
-    #noteInput, #dateLimiteInput {
+    #noteInput, #dateLimiteInput, #recurrenceSelect {
       font-size: 1rem;
       padding: 0.8rem;
       flex: 1;
@@ -141,7 +141,7 @@
         flex-direction: column;
       }
 
-      #noteInput, #dateLimiteInput {
+      #noteInput, #dateLimiteInput, #recurrenceSelect {
         width: 100%;
         font-size: 0.9rem;
         padding: 0.6rem;
@@ -187,6 +187,12 @@
   <div class="input-container">
     <input type="text" id="noteInput" placeholder="Entrez une note">
     <input type="datetime-local" id="dateLimiteInput" placeholder="Date et heure limite" step="60">
+    <select id="recurrenceSelect">
+      <option value="once">Une fois</option>
+      <option value="daily">Chaque jour</option>
+      <option value="weekly">Chaque semaine</option>
+      <option value="monthly">Chaque mois</option>
+    </select>
     <button onclick="enregistrerClic()">Ajouter</button>
   </div>
 
@@ -195,7 +201,7 @@
   <div id="errorMessage"></div>
 
   <script>
-    const API_URL = "https://script.google.com/macros/s/AKfycbyZFe8FgEMNzGL6N23OwLbRNnwEyU3uTwXNf-BahtoL_LVkzxFWvRFkZBj7V9W81J9I/exec";
+    const API_URL = "https://script.google.com/macros/s/AKfycbxqInTP-BNd12qi7UOG7njvPMlxEYOcMW9houyGzuWpKUDpqEsz1m-ez3UvPlYFxV7L/exec";
 
     async function chargerHistorique() {
       try {
@@ -226,7 +232,7 @@
             }
             const li = document.createElement("li");
             const textSpan = document.createElement("span");
-            textSpan.textContent = `• Date: ${item.timestamp}${item.note ? ' | Note: ' + item.note : ' | Note: (aucune)'}${item.dateLimite ? ' | Date limite: ' + item.dateLimite : ' | Date limite: (aucune)'}${item.validationTimestamp ? ' | Validé: ' + item.validationTimestamp : ''}`;
+            textSpan.textContent = `• Date: ${item.timestamp}${item.note ? ' | Note: ' + item.note : ' | Note: (aucune)'}${item.dateLimite ? ' | Date limite: ' + item.dateLimite : ' | Date limite: (aucune)'}${item.recurrence ? ' | Récurrence: ' + item.recurrence : ''}${item.validationTimestamp ? ' | Validé: ' + item.validationTimestamp : ''}`;
             const buttonContainer = document.createElement("div");
 
             const deleteBtn = document.createElement("button");
@@ -250,7 +256,7 @@
         }
 
         document.getElementById("compteur").textContent = data.length > 0 
-          ? `Dernier appui : Date: ${data[0].timestamp}${data[0].note ? ' | Note: ' + data[0].note : ' | Note: (aucune)'}${data[0].dateLimite ? ' | Date limite: ' + data[0].dateLimite : ' | Date limite: (aucune)'}${data[0].validationTimestamp ? ' | Validé: ' + data[0].validationTimestamp : ''}` 
+          ? `Dernier appui : Date: ${data[0].timestamp}${data[0].note ? ' | Note: ' + data[0].note : ' | Note: (aucune)'}${data[0].dateLimite ? ' | Date limite: ' + data[0].dateLimite : ' | Date limite: (aucune)'}${data[0].recurrence ? ' | Récurrence: ' + data[0].recurrence : ''}${data[0].validationTimestamp ? ' | Validé: ' + data[0].validationTimestamp : ''}` 
           : "Dernier appui : jamais";
 
         document.getElementById("errorMessage").textContent = "";
@@ -264,8 +270,10 @@
       try {
         const note = document.getElementById("noteInput").value.trim();
         let dateLimite = document.getElementById("dateLimiteInput").value;
+        const recurrence = document.getElementById("recurrenceSelect").value;
         console.log("Note saisie :", note);
         console.log("Date limite saisie :", dateLimite);
+        console.log("Récurrence saisie :", recurrence);
 
         if (!note) {
           alert("Veuillez entrer une note avant d'ajouter.");
@@ -274,7 +282,7 @@
         }
 
         dateLimite = dateLimite || "";
-        const url = `${API_URL}?add=true&note=${encodeURIComponent(note)}&dateLimite=${encodeURIComponent(dateLimite)}`;
+        const url = `${API_URL}?add=true&note=${encodeURIComponent(note)}&dateLimite=${encodeURIComponent(dateLimite)}&recurrence=${encodeURIComponent(recurrence)}`;
         console.log("URL envoyée :", url);
 
         const res = await fetch(url, { method: 'GET' });
@@ -285,6 +293,7 @@
 
         document.getElementById("noteInput").value = '';
         document.getElementById("dateLimiteInput").value = '';
+        document.getElementById("recurrenceSelect").value = 'once';
         console.log("Clic enregistré, rechargement de l'historique...");
         await chargerHistorique();
       } catch (e) {
