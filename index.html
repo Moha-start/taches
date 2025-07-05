@@ -195,7 +195,7 @@
   <div id="errorMessage"></div>
 
   <script>
-    const API_URL = "https://script.google.com/macros/s/AKfycbwEC_rynkKVSwzDQHstPzu6V0jwWaA1SL-zjLQxxlIa9CX_1BswUMYrh1dOPVH3j5Br/exec";
+    const API_URL = "https://script.google.com/macros/s/AKfycbyChlGpHhrT7aHq_WXMxGqtd4cFVzBjQfD13Jfrw5PQn5bxcgNEnVgc8KEoUT3oi89w/exec";
 
     async function chargerHistorique() {
       try {
@@ -209,11 +209,10 @@
           throw new Error("Les données reçues ne sont pas un tableau");
         }
 
-        // Trier du plus récent au plus ancien
         data.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
 
         const historique = document.getElementById("historique");
-        historique.innerHTML = ""; // Clear list to prevent duplicates
+        historique.innerHTML = "";
 
         if (data.length === 0) {
           const li = document.createElement("li");
@@ -230,18 +229,16 @@
             textSpan.textContent = `• Date: ${item.timestamp}${item.note ? ' | Note: ' + item.note : ' | Note: (aucune)'}${item.dateLimite ? ' | Date limite: ' + item.dateLimite : ' | Date limite: (aucune)'}${item.validationTimestamp ? ' | Validé: ' + item.validationTimestamp : ''}`;
             const buttonContainer = document.createElement("div");
 
-            // Bouton Supprimer
             const deleteBtn = document.createElement("button");
             deleteBtn.textContent = "Supprimer";
             deleteBtn.className = "delete-btn";
             deleteBtn.onclick = () => supprimerEntree(item.timestamp);
             buttonContainer.appendChild(deleteBtn);
 
-            // Bouton Valider
             const validateBtn = document.createElement("button");
             validateBtn.textContent = "Valider";
             validateBtn.className = "validate-btn";
-            validateBtn.disabled = !!item.validationTimestamp; // Désactivé si déjà validé
+            validateBtn.disabled = !!item.validationTimestamp;
             validateBtn.onclick = () => validerEntree(item.timestamp);
             buttonContainer.appendChild(validateBtn);
 
@@ -276,12 +273,11 @@
           return;
         }
 
-        // Si dateLimite est vide, envoyer une chaîne vide
         dateLimite = dateLimite || "";
         const url = `${API_URL}?add=true&note=${encodeURIComponent(note)}&dateLimite=${encodeURIComponent(dateLimite)}`;
         console.log("URL envoyée :", url);
 
-        const res = await fetch(url);
+        const res = await fetch(url, { method: 'GET' });
         if (!res.ok) {
           const errorText = await res.text();
           throw new Error(`Erreur HTTP : ${res.status} ${res.statusText} - ${errorText}`);
@@ -325,7 +321,6 @@
       }
     }
 
-    // Charger l'historique au démarrage
     chargerHistorique();
   </script>
 </body>
