@@ -186,7 +186,6 @@
 
   <div class="input-container">
     <input type="text" id="noteInput" placeholder="Entrez une note">
-    <!-- Utilisation de datetime-local avec step=60 pour garantir le sélecteur d'heure -->
     <input type="datetime-local" id="dateLimiteInput" placeholder="Date et heure limite" step="60">
     <button onclick="enregistrerClic()">Ajouter</button>
   </div>
@@ -196,7 +195,7 @@
   <div id="errorMessage"></div>
 
   <script>
-    const API_URL = "https://script.google.com/macros/s/AKfycbzbjV1ijXFxL0zOgK-mz1IRPnnedNhx-VWZ0r0Q0GzvVXu6PL2oNYMwGyeoXbz4aBtQ/exec";
+    const API_URL = "https://script.google.com/macros/s/AKfycbwEC_rynkKVSwzDQHstPzu6V0jwWaA1SL-zjLQxxlIa9CX_1BswUMYrh1dOPVH3j5Br/exec";
 
     async function chargerHistorique() {
       try {
@@ -221,7 +220,6 @@
           li.textContent = "Aucune entrée disponible";
           historique.appendChild(li);
         } else {
-          console.log(data);
           data.forEach(item => {
             if (!item.timestamp) {
               console.warn("Entrée sans timestamp :", item);
@@ -268,17 +266,27 @@
     async function enregistrerClic() {
       try {
         const note = document.getElementById("noteInput").value.trim();
-        const dateLimite = document.getElementById("dateLimiteInput").value;
-        console.log("Valeur de dateLimiteInput :", dateLimite); // Debug
+        let dateLimite = document.getElementById("dateLimiteInput").value;
+        console.log("Note saisie :", note);
+        console.log("Date limite saisie :", dateLimite);
+
         if (!note) {
           alert("Veuillez entrer une note avant d'ajouter.");
           document.getElementById("errorMessage").textContent = "Veuillez entrer une note.";
           return;
         }
-        const url = `${API_URL}?add=true¬e=${encodeURIComponent(note)}&dateLimite=${encodeURIComponent(dateLimite)}`;
-        console.log("Envoi de la requête :", url); // Debug
+
+        // Si dateLimite est vide, envoyer une chaîne vide
+        dateLimite = dateLimite || "";
+        const url = `${API_URL}?add=true&note=${encodeURIComponent(note)}&dateLimite=${encodeURIComponent(dateLimite)}`;
+        console.log("URL envoyée :", url);
+
         const res = await fetch(url);
-        if (!res.ok) throw new Error(`Erreur HTTP : ${res.status} ${res.statusText}`);
+        if (!res.ok) {
+          const errorText = await res.text();
+          throw new Error(`Erreur HTTP : ${res.status} ${res.statusText} - ${errorText}`);
+        }
+
         document.getElementById("noteInput").value = '';
         document.getElementById("dateLimiteInput").value = '';
         console.log("Clic enregistré, rechargement de l'historique...");
@@ -291,7 +299,7 @@
 
     async function supprimerEntree(timestamp) {
       try {
-        const url = `${API_URL}?delete=true×tamp=${encodeURIComponent(timestamp)}`;
+        const url = `${API_URL}?delete=true&timestamp=${encodeURIComponent(timestamp)}`;
         console.log("Envoi de la requête de suppression :", url);
         const res = await fetch(url);
         if (!res.ok) throw new Error(`Erreur HTTP : ${res.status} ${res.statusText}`);
@@ -305,7 +313,7 @@
 
     async function validerEntree(timestamp) {
       try {
-        const url = `${API_URL}?validate=true×tamp=${encodeURIComponent(timestamp)}`;
+        const url = `${API_URL}?validate=true&timestamp=${encodeURIComponent(timestamp)}`;
         console.log("Envoi de la requête de validation :", url);
         const res = await fetch(url);
         if (!res.ok) throw new Error(`Erreur HTTP : ${res.status} ${res.statusText}`);
