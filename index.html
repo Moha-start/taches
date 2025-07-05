@@ -1,77 +1,317 @@
 <!DOCTYPE html>
-<html>
+<html lang="fr">
 <head>
-    <title>Liste des tâches</title>
-    <meta charset="UTF-8">
-    <style>
-        body { font-family: Arial, sans-serif; margin: 20px; }
-        .task { margin: 10px 0; padding: 10px; border: 1px solid #ccc; }
-        .task button { margin-left: 10px; }
-        .completed { text-decoration: line-through; color: #00cc00; } /* Vert pour tâches terminées */
-        .pending { color: #000000; } /* Noir pour tâches en attente */
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bouton connecté à Google Sheets</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 5vw;
+      padding: 5vw;
+      background: #f5f5f5;
+      color: #333;
+      box-sizing: border-box;
+    }
+
+    h1 {
+      color: #4caf50;
+      margin-bottom: 1.5rem;
+      font-size: 1.8rem;
+      text-align: center;
+    }
+
+    .input-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    #noteInput {
+      font-size: 1rem;
+      padding: 0.8rem;
+      flex: 1;
+      min-width: 200px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+
+    button {
+      font-size: 1rem;
+      padding: 0.8rem 1.5rem;
+      background: #4caf50;
+      color: #fff;
+      border: none;
+      border-radius: 5px;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.1);
+      transition: background 0.3s ease;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #45a049;
+    }
+
+    .delete-btn {
+      font-size: 0.9rem;
+      padding: 0.5rem 1rem;
+      background: #f44336;
+      color: #fff;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      margin-left: 0.5rem;
+    }
+
+    .delete-btn:hover {
+      background: #d32f2f;
+    }
+
+    .validate-btn {
+      font-size: 0.9rem;
+      padding: 0.5rem 1rem;
+      background: #2196f3;
+      color: #fff;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      margin-left: 0.5rem;
+    }
+
+    .validate-btn:hover {
+      background: #1976d2;
+    }
+
+    .validate-btn:disabled {
+      background: #cccccc;
+      cursor: not-allowed;
+    }
+
+    #compteur {
+      font-size: 1rem;
+      color: #555;
+      margin: 1rem 0;
+      text-align: center;
+    }
+
+    ul#historique {
+      list-style-type: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    ul#historique li {
+      background: #fff;
+      padding: 0.8rem;
+      margin-bottom: 0.8rem;
+      border-radius: 5px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      font-size: 0.95rem;
+    }
+
+    ul#historique li:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);
+      background: #e8f5e9;
+    }
+
+    #errorMessage {
+      color: #f44336;
+      font-size: 1rem;
+      margin: 1rem 0;
+      text-align: center;
+    }
+
+    @media (max-width: 600px) {
+      body {
+        margin: 2vw;
+        padding: 2vw;
+      }
+
+      h1 {
+        font-size: 1.5rem;
+      }
+
+      .input-container {
+        flex-direction: column;
+      }
+
+      #noteInput {
+        width: 100%;
+        font-size: 0.9rem;
+        padding: 0.6rem;
+      }
+
+      button {
+        width: 100%;
+        font-size: 0.9rem;
+        padding: 0.6rem;
+      }
+
+      .delete-btn, .validate-btn {
+        font-size: 0.8rem;
+        padding: 0.4rem 0.8rem;
+        margin-left: 0;
+        margin-top: 0.5rem;
+      }
+
+      #compteur {
+        font-size: 0.9rem;
+      }
+
+      ul#historique li {
+        flex-direction: column;
+        align-items: flex-start;
+        font-size: 0.85rem;
+        padding: 0.6rem;
+      }
+
+      ul#historique li span {
+        margin-bottom: 0.5rem;
+      }
+
+      #errorMessage {
+        font-size: 0.9rem;
+      }
+    }
+  </style>
 </head>
 <body>
-    <h1>Liste des tâches</h1>
-    <div>
-        <input type="text" id="note" placeholder="Entrez votre tâche">
-        <input type="datetime-local" id="deadline" placeholder="Date limite">
-        <button onclick="addTask()">Ajouter</button>
-    </div>
-    <div id="tasks"></div>
+  <h1>Bouton connecté à Google Sheets</h1>
 
-    <script>
-        function loadTasks() {
-            fetch('https://script.google.com/macros/s/AKfycbzCOTf868WpVI9RxBsFNrOlgzR8yNEgSh5dpXoqeWgfRkeul9LEzyPIulxiut2v5tmV/exec')
-                .then(response => response.json())
-                .then(data => {
-                    const tasksDiv = document.getElementById('tasks');
-                    tasksDiv.innerHTML = '';
-                    data.forEach(task => {
-                        const taskDiv = document.createElement('div');
-                        taskDiv.className = 'task';
-                        const statusClass = task.status === 'Completed' ? 'completed' : 'pending';
-                        taskDiv.innerHTML = `
-                            <span class="${statusClass}">${task.deadline} : ${task.note} (${task.status === 'Completed' ? 'Terminé' : 'En attente'})</span>
-                            <button onclick="deleteTask('${task.deadline}')">Supprimer</button>
-                            <button onclick="validateTask('${task.deadline}')" ${task.status === 'Completed' ? 'disabled' : ''}>Valider</button>
-                        `;
-                        tasksDiv.appendChild(taskDiv);
-                    });
-                })
-                .catch(error => console.error('Erreur:', error));
+  <div class="input-container">
+    <input type="text" id="noteInput" placeholder="Entrez une note">
+    <button onclick="enregistrerClic()">Ajouter</button>
+  </div>
+
+  <div id="compteur">Dernier appui : jamais</div>
+  <ul id="historique"></ul>
+  <div id="errorMessage"></div>
+
+  <script>
+    const API_URL = "https://script.google.com/macros/s/AKfycbwcot6Gg03V9MPnSjgeai5zz4-My9trAz1qISAUOxvOZilW2N77Bjk-otO76gTa_M6h/exec";
+
+    async function chargerHistorique() {
+      try {
+        console.log("Chargement de l'historique...");
+        const res = await fetch(API_URL);
+        if (!res.ok) throw new Error(`Erreur HTTP : ${res.status} ${res.statusText}`);
+        const data = await res.json();
+        console.log("Données reçues :", data);
+
+        if (!Array.isArray(data)) {
+          throw new Error("Les données reçues ne sont pas un tableau");
         }
 
-        function addTask() {
-            const note = document.getElementById('note').value;
-            const deadline = document.getElementById('deadline').value;
-            if (note && deadline) {
-                fetch(`https://script.google.com/macros/s/AKfycbzCOTf868WpVI9RxBsFNrOlgzR8yNEgSh5dpXoqeWgfRkeul9LEzyPIulxiut2v5tmV/exec?add=true¬e=${encodeURIComponent(note)}&deadline=${encodeURIComponent(deadline)}`)
-                    .then(() => {
-                        document.getElementById('note').value = '';
-                        document.getElementById('deadline').value = '';
-                        loadTasks();
-                    })
-                    .catch(error => console.error('Erreur:', error));
-            } else {
-                alert('Veuillez entrer une tâche et une date limite.');
+        // Trier du plus récent au plus ancien
+        data.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+        const historique = document.getElementById("historique");
+        historique.innerHTML = ""; // Clear list to prevent duplicates
+
+        if (data.length === 0) {
+          const li = document.createElement("li");
+          li.textContent = "Aucune entrée disponible";
+          historique.appendChild(li);
+        } else {
+          data.forEach(item => {
+            if (!item.timestamp) {
+              console.warn("Entrée sans timestamp :", item);
+              return;
             }
+            const li = document.createElement("li");
+            const textSpan = document.createElement("span");
+            textSpan.textContent = `• Date: ${item.timestamp}${item.note ? ' | Note: ' + item.note : ' | Note: (aucune)'}${item.validationTimestamp ? ' | Validé: ' + item.validationTimestamp : ''}`;
+            const buttonContainer = document.createElement("div");
+
+            // Bouton Supprimer
+            const deleteBtn = document.createElement("button");
+            deleteBtn.textContent = "Supprimer";
+            deleteBtn.className = "delete-btn";
+            deleteBtn.onclick = () => supprimerEntree(item.timestamp);
+            buttonContainer.appendChild(deleteBtn);
+
+            // Bouton Valider
+            const validateBtn = document.createElement("button");
+            validateBtn.textContent = "Valider";
+            validateBtn.className = "validate-btn";
+            validateBtn.disabled = !!item.validationTimestamp; // Désactivé si déjà validé
+            validateBtn.onclick = () => validerEntree(item.timestamp);
+            buttonContainer.appendChild(validateBtn);
+
+            li.appendChild(textSpan);
+            li.appendChild(buttonContainer);
+            historique.appendChild(li);
+            console.log("Ajout de l'entrée à la liste :", item);
+          });
         }
 
-        function deleteTask(deadline) {
-            fetch(`https://script.google.com/macros/s/AKfycbzCOTf868WpVI9RxBsFNrOlgzR8yNEgSh5dpXoqeWgfRkeul9LEzyPIulxiut2v5tmV/exec?delete=true&deadline=${encodeURIComponent(deadline)}`)
-                .then(() => loadTasks())
-                .catch(error => console.error('Erreur:', error));
-        }
+        document.getElementById("compteur").textContent = data.length > 0 
+          ? `Dernier appui : Date: ${data[0].timestamp}${data[0].note ? ' | Note: ' + data[0].note : ' | Note: (aucune)'}${data[0].validationTimestamp ? ' | Validé: ' + data[0].validationTimestamp : ''}` 
+          : "Dernier appui : jamais";
 
-        function validateTask(deadline) {
-            fetch(`https://script.google.com/macros/s/AKfycbzCOTf868WpVI9RxBsFNrOlgzR8yNEgSh5dpXoqeWgfRkeul9LEzyPIulxiut2v5tmV/exec?validate=true&deadline=${encodeURIComponent(deadline)}`)
-                .then(() => loadTasks())
-                .catch(error => console.error('Erreur:', error));
-        }
+        document.getElementById("errorMessage").textContent = "";
+      } catch (e) {
+        console.error("Erreur de chargement :", e);
+        document.getElementById("errorMessage").textContent = `Erreur de chargement : ${e.message}`;
+      }
+    }
 
-        // Charger les tâches au démarrage
-        window.onload = loadTasks;
-    </script>
+    async function enregistrerClic() {
+      try {
+        const note = document.getElementById("noteInput").value.trim();
+        if (!note) {
+          alert("Veuillez entrer une note avant d'ajouter.");
+          document.getElementById("errorMessage").textContent = "Veuillez entrer une note.";
+          return;
+        }
+        const url = `${API_URL}?add=true&note=${encodeURIComponent(note)}`;
+        console.log("Envoi de la requête :", url);
+        const res = await fetch(url);
+        if (!res.ok) throw new Error(`Erreur HTTP : ${res.status} ${res.statusText}`);
+        document.getElementById("noteInput").value = ''; // Clear input after submission
+        console.log("Clic enregistré, rechargement de l'historique...");
+        await chargerHistorique();
+      } catch (e) {
+        console.error("Erreur d'envoi :", e);
+        document.getElementById("errorMessage").textContent = `Erreur d'envoi : ${e.message}`;
+      }
+    }
+
+    async function supprimerEntree(timestamp) {
+      try {
+        const url = `${API_URL}?delete=true&timestamp=${encodeURIComponent(timestamp)}`;
+        console.log("Envoi de la requête de suppression :", url);
+        const res = await fetch(url);
+        if (!res.ok) throw new Error(`Erreur HTTP : ${res.status} ${res.statusText}`);
+        console.log("Entrée supprimée, rechargement de l'historique...");
+        await chargerHistorique();
+      } catch (e) {
+        console.error("Erreur de suppression :", e);
+        document.getElementById("errorMessage").textContent = `Erreur de suppression : ${e.message}`;
+      }
+    }
+
+    async function validerEntree(timestamp) {
+      try {
+        const url = `${API_URL}?validate=true&timestamp=${encodeURIComponent(timestamp)}`;
+        console.log("Envoi de la requête de validation :", url);
+        const res = await fetch(url);
+        if (!res.ok) throw new Error(`Erreur HTTP : ${res.status} ${res.statusText}`);
+        console.log("Entrée validée, rechargement de l'historique...");
+        await chargerHistorique();
+      } catch (e) {
+        console.error("Erreur de validation :", e);
+        document.getElementById("errorMessage").textContent = `Erreur de validation : ${e.message}`;
+      }
+    }
+
+    chargerHistorique();
+  </script>
 </body>
 </html>
