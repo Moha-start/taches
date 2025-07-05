@@ -186,7 +186,8 @@
 
   <div class="input-container">
     <input type="text" id="noteInput" placeholder="Entrez une note">
-    <input type="datetime-local" id="dateLimiteInput" placeholder="Date et heure limite">
+    <!-- Utilisation de datetime-local avec step=60 pour garantir le sélecteur d'heure -->
+    <input type="datetime-local" id="dateLimiteInput" placeholder="Date et heure limite" step="60">
     <button onclick="enregistrerClic()">Ajouter</button>
   </div>
 
@@ -220,6 +221,7 @@
           li.textContent = "Aucune entrée disponible";
           historique.appendChild(li);
         } else {
+          console.log(data);
           data.forEach(item => {
             if (!item.timestamp) {
               console.warn("Entrée sans timestamp :", item);
@@ -267,17 +269,18 @@
       try {
         const note = document.getElementById("noteInput").value.trim();
         const dateLimite = document.getElementById("dateLimiteInput").value;
+        console.log("Valeur de dateLimiteInput :", dateLimite); // Debug
         if (!note) {
           alert("Veuillez entrer une note avant d'ajouter.");
           document.getElementById("errorMessage").textContent = "Veuillez entrer une note.";
           return;
         }
         const url = `${API_URL}?add=true¬e=${encodeURIComponent(note)}&dateLimite=${encodeURIComponent(dateLimite)}`;
-        console.log("Envoi de la requête :", url);
+        console.log("Envoi de la requête :", url); // Debug
         const res = await fetch(url);
         if (!res.ok) throw new Error(`Erreur HTTP : ${res.status} ${res.statusText}`);
-        document.getElementById("noteInput").value = ''; // Clear input after submission
-        document.getElementById("dateLimiteInput").value = ''; // Clear date input after submission
+        document.getElementById("noteInput").value = '';
+        document.getElementById("dateLimiteInput").value = '';
         console.log("Clic enregistré, rechargement de l'historique...");
         await chargerHistorique();
       } catch (e) {
@@ -314,6 +317,7 @@
       }
     }
 
+    // Charger l'historique au démarrage
     chargerHistorique();
   </script>
 </body>
